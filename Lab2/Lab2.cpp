@@ -1,8 +1,10 @@
 #include <windows.h>
+#include <string>
 
 LONG WINAPI WndProc(HWND, UINT, WPARAM, LPARAM);
+HPEN dashPen = CreatePen(PS_DASH, 1, RGB(255, 255, 0));
 
-int x0 = 0, y0 = 0;
+int x0coord = 0, y0coord = 0;
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
@@ -11,10 +13,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     WNDCLASS w;
 
     memset(&w, 0, sizeof(WNDCLASS));
-    w.style = CS_HREDRAW | CS_VREDRAW;
+    w.style = CS_HREDRAW | CS_VREDRAW | CS_DBLCLKS;
     w.lpfnWndProc = WndProc;
     w.hInstance = hInstance;
-    w.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH);
+    w.hbrBackground = (HBRUSH)GetStockObject(2);
     w.lpszClassName = "My Class";
     RegisterClass(&w);
 
@@ -34,16 +36,29 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 LONG WINAPI WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 {
     HDC hDC;
+    std::string str;
 
     switch (Message)
     {
+    case WM_LBUTTONDBLCLK:
+        MessageBox(NULL, "Hello!", "MSG box", MB_OK | MB_OKCANCEL);
+        break;
+    case WM_LBUTTONDOWN:
+        hDC = GetDC(hwnd);
+        x0coord = LOWORD(lParam);
+        y0coord = HIWORD(lParam);
+        str += std::to_string(x0coord) + " " + std::to_string(y0coord);
+        TextOut(hDC, x0coord, y0coord, str.c_str(), str.length());
+        break;
     case WM_RBUTTONDOWN:
-        x0 = LOWORD(lParam);
-        y0 = HIWORD(lParam);
+        x0coord = LOWORD(lParam);
+        y0coord = HIWORD(lParam);
         break;
     case WM_RBUTTONUP:
         hDC = GetDC(hwnd);
-        MoveToEx(hDC, x0, y0, NULL);
+        SelectObject(hDC, dashPen);
+        SetDCPenColor(hDC, RGB(0, 0, 255));
+        MoveToEx(hDC, x0coord, y0coord, NULL);
         LineTo(hDC, LOWORD(lParam), HIWORD(lParam));
         break;
     case WM_DESTROY:
