@@ -2,7 +2,6 @@
 #include <string>
 
 LONG WINAPI WndProc(HWND, UINT, WPARAM, LPARAM);
-HPEN dashPen = CreatePen(PS_DASH, 1, RGB(255, 255, 0));
 
 int x0coord = 0, y0coord = 0;
 
@@ -56,7 +55,7 @@ LONG WINAPI WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         break;
     case WM_RBUTTONUP:
         hDC = GetDC(hwnd);
-        SelectObject(hDC, dashPen);
+        SelectObject(hDC, GetStockObject(DC_PEN));
         SetDCPenColor(hDC, RGB(0, 0, 255));
         MoveToEx(hDC, x0coord, y0coord, NULL);
         LineTo(hDC, LOWORD(lParam), HIWORD(lParam));
