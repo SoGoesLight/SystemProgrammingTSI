@@ -36,7 +36,7 @@ int main()
     //3
     int defUserLanguage = GetUserDefaultLangID();
     char* code = new char[100];
-    VerLanguageNameW(defUserLanguage, (LPTSTR)code, 100); // VerLanguageNameA shows "??????? ??????"
+    VerLanguageNameW(defUserLanguage, (LPTSTR)code, 100);
 
     TCHAR username[256];
     DWORD maxUsernameLength = 256;
@@ -88,7 +88,10 @@ int main()
                                  &number_of_free_clusters, // 32767739
                                  &total_number_of_clusters); // 243910212
 
-            unsigned long int freeSpace = sectors_per_cluster * bytes_per_sector * number_of_free_clusters; // in Bytes
+            long long freeSpace = 1;  // below we calculate in Bytes first
+            freeSpace *= sectors_per_cluster;
+            freeSpace *= bytes_per_sector;
+            freeSpace *= number_of_free_clusters;
             freeSpace /= 1048576; // in GBs
             sprintf_s(temp, " - %u GBs", freeSpace);
             drivesTypesAndFreeSpace += temp;
