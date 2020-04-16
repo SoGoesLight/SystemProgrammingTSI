@@ -83,22 +83,20 @@ int main()
                 number_of_free_clusters = 0,
                 total_number_of_clusters = 0;
             
-            GetDiskFreeSpaceA(c, &sectors_per_cluster, // 8
-                                 &bytes_per_sector, // 512
-                                 &number_of_free_clusters, // 32767739
-                                 &total_number_of_clusters); // 243910212
+            GetDiskFreeSpaceA(c, &sectors_per_cluster,
+                                 &bytes_per_sector,
+                                 &number_of_free_clusters,
+                                 &total_number_of_clusters);
 
             long long freeSpace = 1;  // below we calculate in Bytes first
             freeSpace *= sectors_per_cluster;
             freeSpace *= bytes_per_sector;
             freeSpace *= number_of_free_clusters;
-            freeSpace /= 1048576; // in GBs
+            freeSpace /= 1000000; // in GBs
             sprintf_s(temp, " - %u GBs", freeSpace);
             drivesTypesAndFreeSpace += temp;
             
-            //free_bytes_available = free_bytes_available / 1000000;
-            //total_number_of_bytes = total_number_of_bytes / 1048576;
-            //total_number_of_free_bytes = total_number_of_free_bytes / 1048576;
+
         }
     }
 
@@ -107,6 +105,7 @@ int main()
     cout << "2.1) Local time: " << strLocalTime << endl;
     cout << "2.2) Time zone: GMT" << direction << hours;
     minutes == 0 ? cout << endl : cout << minutes << endl;
+    cout << "2.3*) Timezone BIAS: " << timeZone.Bias << endl;
     cout << "3.1) Default user language ID: " << defUserLanguage << endl;
     cout << "3.2) Default user language: " << code << endl; // random Unicode symbols because of Russian def userlang
     printf_s("3.3) Username: %s\n", username); // without printf_s formatting shows kind of address
