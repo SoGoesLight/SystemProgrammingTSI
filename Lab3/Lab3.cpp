@@ -52,53 +52,6 @@ int main()
     wchar_t sysDir[MAX_PATH];
     GetSystemDirectoryA((LPSTR)sysDir, sizeof(sysDir));
 
-    //5
-    int logicalDrives = GetLogicalDrives();
-
-    int n;
-    char c[4];
-    string drives, drivesTypesAndFreeSpace;
-
-    for (int i = 0; i < 26; i++) // 26 - latin alphabet
-    {
-        n = ((logicalDrives >> i) & 0x00000001); // bit shift
-        if (n == 1) // check if the last bit equals to 1
-        {
-            c[0] = char(65 + i); // get the correct letter from ASCII table
-            c[1] = ':'; // formatting 
-            c[2] = '\\'; // formatting
-            c[3] = '\0'; // null-terminator
-
-            drives += c; // appending everything from above for output
-            drives += ", ";
-
-            char temp[256];
-            string type = getDriveTypeStr(GetDriveTypeA((LPCSTR)c));
-            sprintf_s(temp, "\n     %s - ", c);
-            drivesTypesAndFreeSpace += temp; // appending everything from above for output
-            drivesTypesAndFreeSpace += type;
-
-            unsigned long int sectors_per_cluster = 0,
-                bytes_per_sector = 0,
-                number_of_free_clusters = 0,
-                total_number_of_clusters = 0;
-            
-            GetDiskFreeSpaceA(c, &sectors_per_cluster,
-                                 &bytes_per_sector,
-                                 &number_of_free_clusters,
-                                 &total_number_of_clusters);
-
-            long long freeSpace = 1;  // below we calculate in Bytes first
-            freeSpace *= sectors_per_cluster;
-            freeSpace *= bytes_per_sector;
-            freeSpace *= number_of_free_clusters;
-            freeSpace /= 1000000; // in GBs
-            sprintf_s(temp, " - %u GBs", freeSpace);
-            drivesTypesAndFreeSpace += temp;
-            
-
-        }
-    }
 
     // Output
     cout << "1) Computer name: " << computerName << endl;
@@ -112,9 +65,61 @@ int main()
     printf_s("4.1) Current directory: %s\n", currentDirectory);
     printf_s("4.2) Windows directory: %s\n", winDir);
     printf_s("4.3) System directory: %s\n", sysDir);
-    cout << "5.1) Logical drives in bits: " << logicalDrives << endl;
-    cout << "5.2) Logical drives by letters: " << drives << endl;
-    cout << "5.3) Logical drives their types and free space: " << drivesTypesAndFreeSpace << endl;
+
+    //5
+
+    int logicalDrives = GetLogicalDrives();
+
+    int n;
+    char c[4];
+    string drive, drives, drivesTypesAndFreeSpace;
+
+    cout << "5.1) Logical drives their types and free space: " << endl;
+
+    for (int i = 0; i < 26; i++) // 26 - latin alphabet
+    {
+        n = ((logicalDrives >> i) & 0x00000001); // bit shift
+        if (n == 1) // check if the last bit equals to 1
+        {
+            c[0] = char(65 + i); // get the correct letter from ASCII table
+            c[1] = ':'; // formatting 
+            c[2] = '\\'; // formatting
+            c[3] = '\0'; // null-terminator
+
+            drive = c;
+            drives += c; // appending everything from above for output
+            drives += ", ";
+
+            char temp[256];
+            string type = getDriveTypeStr(GetDriveTypeA((LPCSTR)c));
+            sprintf_s(temp, "\n     %s - ", c);
+            drivesTypesAndFreeSpace += temp; // appending everything from above for output
+            drivesTypesAndFreeSpace += type;
+
+            unsigned long int sectors_per_cluster = 0,
+                bytes_per_sector = 0,
+                number_of_free_clusters = 0,
+                total_number_of_clusters = 0;
+
+            GetDiskFreeSpaceA(c, &sectors_per_cluster,
+                &bytes_per_sector,
+                &number_of_free_clusters,
+                &total_number_of_clusters);
+
+            long long freeSpace = 1;  // below we calculate in Bytes first
+            freeSpace *= sectors_per_cluster;
+            freeSpace *= bytes_per_sector;
+            freeSpace *= number_of_free_clusters;
+            //freeSpace /= 1000000; // in GBs
+            sprintf_s(temp, " - %u GBs", freeSpace);
+            drivesTypesAndFreeSpace += temp;
+            cout << "\t" << drive << " - " << type << " - " << freeSpace << " in bytes\n";
+        }
+    }
+
+    cout << "5.2) Logical drives in bits: " << logicalDrives << endl;
+    cout << "5.3) Logical drives by letters: " << drives << endl;
+    //cout << "5.1) Logical drives their types and free space: " << drivesTypesAndFreeSpace << endl;
 
     return 0;
 }
