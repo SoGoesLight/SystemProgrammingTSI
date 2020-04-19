@@ -1,5 +1,10 @@
 ﻿#include <iostream>
 #include <windows.h>
+#include <tchar.h>
+#include <string.h>
+
+#define BUFFER_SIZE 1024
+
 using namespace std;
 
 // 14. В текущем каталоге программно создать файл subMape.dat. 
@@ -8,31 +13,56 @@ using namespace std;
 
 int main()
 {
-	HANDLE hfile;
-	DWORD nb;
+	HANDLE hFind, hFile;
+	WIN32_FIND_DATA lpFile;
+	char buff[BUFFER_SIZE] = { 0 };
+	DWORD dwBytesRead, dwBytesWritten;
 
-	//hfile = CreateFileW(L"subMape.dat", GENERIC_WRITE, 0, NULL, 
-	//				OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-	//SetFilePointer(hfile, 4, NULL, FILE_END);
-	//for (int i = 0; i < 10; i++)
-	//{
-	//	WriteFile(hfile, &i, sizeof(int), &nb, NULL);
-	//}
-	//CloseHandle(hfile);
+	// Find & Write
+	hFile = CreateFile(_TEXT("subMape.dat"), GENERIC_WRITE, 0, NULL,
+		OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 
+	SetCurrentDirectory(_TEXT("C:\\Program Files\\"));
+	hFind = FindFirstFile(_TEXT("*.*"), &lpFile);
 
-	hfile = CreateFile(L"subMape.dat", GENERIC_READ, 0, NULL,
-					OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-	int m;
-	ReadFile(hfile, &m, sizeof(int), &nb, NULL);
-	cout << endl;
-	while (nb != 0)
+	if (hFind != INVALID_HANDLE_VALUE)
 	{
-		ReadFile(hfile, &m, sizeof(int), &nb, NULL);
-		cout << m << " ";
+		sprintf_s(buff, "%ws\n", lpFile.cFileName);
+		WriteFile(hFile, buff, (DWORD)strlen(buff), &dwBytesWritten, NULL);
 	}
-	cout << endl;
-	CloseHandle(hfile);
+	else
+	{
+		printf("File was not opened. Error %u", GetLastError());
+		return EXIT_FAILURE;
+	}
+
+	while (FindNextFile(hFind, &lpFile))
+	{
+		sprintf_s(buff, "%ws\n", lpFile.cFileName);
+		WriteFile(hFile, buff, (DWORD)strlen(buff), &dwBytesWritten, NULL);
+	}
+	FindClose(hFind);
+	CloseHandle(hFile);
+
+	//Read
+	SetCurrentDirectory(_TEXT("C:\\Projects\\SystemProgramming\\Lab4\\"));
+	hFile = CreateFile(_TEXT("subMape.dat"), GENERIC_READ, 0, NULL,
+		OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+
+	if (hFile != INVALID_HANDLE_VALUE)
+	{
+		ReadFile(hFile, &buff, BUFFER_SIZE, &dwBytesRead, NULL);
+
+		for (int i = 0; i < dwBytesRead; i++)
+			cout << buff[i];
+	}
+	else
+	{
+		printf("File was not read correctly. Error %u", GetLastError());
+		return EXIT_FAILURE;
+	}
+
+	CloseHandle(hFile);
 
 	return 0;
 }
