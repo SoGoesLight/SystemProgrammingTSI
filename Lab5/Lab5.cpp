@@ -76,7 +76,7 @@ void QueryKey(HKEY hKey)
 
 	// Values
 	BYTE* buffer = new BYTE[longestValueData];
-	RtlZeroMemory(buffer, longestValueData); // just cool way to fill a block of memory with zeros
+	RtlZeroMemory(buffer, longestValueData); // simple a cool way to fill a block of memory with zeros
 
 	if (keyValuesNum)
 	{
