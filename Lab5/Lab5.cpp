@@ -1,64 +1,142 @@
 ﻿#include <iostream>
 #include <windows.h>
-#include <conio.h>
+#include <tchar.h>
+
+#define MAX_KEY_LENGTH 255
+#define MAX_VALUE_NAME 8191
 
 using namespace std;
 
 // Вариант 2. Написать консольное приложение, выводящие на экран хранящиеся в заданном ключе реестра переменные, их типы и значения. 
 //            Имена корневого и заданного ключей вводится в программу с клавиатуры.
 
-//HKEY_CLASSES_ROOT
-//HKEY_CURRENT_USER
-//HKEY_LOCAL_MACHINE
-//HKEY_USERS
-//HKEY_CURRENT_CONFIG
+void QueryKey(HKEY hKey);
+string RegistryValueTypeToString(DWORD type);
+HKEY StringToHKEY(string str); // since we can't just input/convert HKEY
 
-int main()
+int main(int argc, _TCHAR* argv[])
 {
-    //DWORD dwRet, cbData, type;
-    DWORD dwType;
-    char buffer[255] = { 0 };
-    DWORD dwBufferSize = sizeof(buffer);
-    HKEY hKey = 0;
-    const char* subkey;
-    const char* anotherKey;
-    //HKEY rootKey = "", setKey = "";
-    //cout << "Enter root key: ";
-    //cin >> rootKey;
-    //cout << "Enter set key: ";
-    //cin >> setKey;
-    //dwRet = RegQueryValueExW(HKEY_PERFORMANCE_DATA, TEXT("GLOBAL"), NULL, &type, (LPBYTE)PerfData, &cbData);
-    //cout << dwRet;
-    //LPTSTR lpData = "";
-    //TCHAR value[255];
+	HKEY hKey, inputHKey;
+	LPCWSTR pString = _T("Software\\Microsoft\\CurrentVersion\\Windows");
+	LPCWSTR stringForFunc;
+	string hKeyString, setKeyString;
 
-    //cout << qwe;
-    //HKEY rKey;
-    //TCHAR Reget[256] = { 0 };
-    //DWORD RegetPath = sizeof(Reget);
-    //LSTATUS rc;
-    //DWORD l;
-    //rc = RegEnumValueW(HKEY_LOCAL_MACHINE, 11, value, &l, NULL, NULL, NULL, NULL);
-    //cout << "rc = " << rc << endl;
-    //RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"\SOFTWARE\\Microsoft\\Internet Explorer", NULL, KEY_QUERY_VALUE, &rKey);
-    //RegQueryValueExW(rKey, L"Version", NULL, NULL, (LPBYTE)&Reget, &RegetPath);
-    //printf("%s", Reget);
-    //getchar();
-    subkey = "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run";
-    anotherKey = "GLOBAL";
-    if (RegOpenKeyExA(HKEY_LOCAL_MACHINE, anotherKey, 0, KEY_ALL_ACCESS, &hKey) == ERROR_SUCCESS)
-    {
-        dwType = REG_SZ;
-        if (RegQueryValueExW(hKey, L"AVG_TRAY", 0, &dwType, (BYTE*)buffer, &dwBufferSize) == ERROR_SUCCESS)
-        {
-            cout << "key value is'" << buffer << "'\n";
-        }
-        else
-            cout << "can not query for key value\n";
-    }
-    //RegEnumKeyExW();
-    //RegQueryInfoKeyW();
-    //RegQueryValueExW();
+	cout << "Enter root directory key, please: ";
+	cin >> hKeyString;                               // input example: HKEY_LOCAL_MACHINE
+    cout << "Enter key directory path, please: ";
+	cin >> setKeyString;							 // input example: SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\
 
-    return 0;
+	inputHKey = StringToHKEY(hKeyString);
+	LONG dwOpenKey = RegOpenKeyExA(inputHKey, setKeyString.c_str(), 0, KEY_READ, &hKey);
+	
+	// example of manual input
+	// LONG dwOpenKey = RegOpenKeyExW(HKEY_LOCAL_MACHINE, _T("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\"), 0, KEY_READ, &hKey); 
+
+	if (dwOpenKey == ERROR_SUCCESS) { // code 0 = ok
+		cout << "Registry key opened successfully, error code " << GetLastError() << endl; 
+		QueryKey(hKey);
+	}
+	else {
+		cout << "Registry key open failed, error code " << dwOpenKey << endl;
+	}
+
+	RegCloseKey(hKey);
+	system("pause");
+	return 0;
+}
+
+void QueryKey(HKEY hKey)
+{
+	TCHAR    subkeyBuff[MAX_KEY_LENGTH];						
+	TCHAR    classBuff[MAX_PATH] = TEXT("");
+	FILETIME fileLastWriteTime;				
+	DWORD    cchClassName = MAX_PATH, subkeysNum = 0, longestSubkeySize, longestClass, keyValuesNum, 
+			 longestValueName, longestValueData, securityDescriptorSize, nameSize, statusCode, type;
+
+	TCHAR valueName[MAX_VALUE_NAME];
+	DWORD chValueName = MAX_VALUE_NAME;
+
+	statusCode = RegQueryInfoKeyW(hKey, classBuff, &cchClassName, NULL, &subkeysNum, &longestSubkeySize, &longestClass, 
+							  &keyValuesNum, &longestValueName, &longestValueData, &securityDescriptorSize, &fileLastWriteTime);     
+
+	// Subkeys
+	if (subkeysNum)
+	{
+		cout << "\nAmount of subkeys: " << subkeysNum << endl;
+		for (int i = 0; i < subkeysNum; i++)
+		{
+			nameSize = MAX_KEY_LENGTH;
+			statusCode = RegEnumKeyExW(hKey, i, subkeyBuff, &nameSize, NULL, NULL, NULL, &fileLastWriteTime);
+			if (statusCode == ERROR_SUCCESS)
+			{
+				wcout << i + 1 << ") " << subkeyBuff << endl;
+			}
+		}
+	}
+
+	// Values
+	BYTE* buffer = new BYTE[longestValueData];
+	RtlZeroMemory(buffer, longestValueData); // just cool way to fill a block of memory with zeros
+
+	if (keyValuesNum)
+	{
+		cout << "\nAmount of values: " << keyValuesNum << endl;
+
+		for (int i = 0, statusCode = ERROR_SUCCESS; i < keyValuesNum; i++)
+		{
+			chValueName = MAX_VALUE_NAME;
+			valueName[longestValueData] = '\0';
+			statusCode = RegEnumValueW(hKey, i, valueName, &chValueName, NULL, NULL, NULL, NULL);
+
+			if (statusCode == ERROR_SUCCESS)
+			{
+
+				DWORD lpData = longestValueData;
+				buffer[0] = '\0'; // in case we got wrong data
+				LONG dwRes = RegQueryValueExW(hKey, valueName, 0, &type, buffer, &lpData);
+				wcout << i + 1 << ") " << valueName << "\r\t\t\t\t Type: "; 
+				cout << RegistryValueTypeToString(type) << endl;
+			}
+		}
+	}
+
+	delete[] buffer; // free memory
+}
+
+string RegistryValueTypeToString(DWORD type) {
+	switch (type) {
+	case REG_NONE:
+		return "REG_NONE";
+	case REG_SZ:
+		return "REG_SZ";
+	case REG_EXPAND_SZ:
+		return "REG_EXPAND_SZ";
+	case REG_BINARY:
+		return "REG_BINARY";
+	case REG_DWORD:
+		return "REG_DWORD";
+	case REG_LINK:
+		return "REG_LINK";
+	case REG_MULTI_SZ:
+		return "REG_MULTI_SZ";
+	case REG_QWORD:
+		return "REG_QWORD";
+	}
+}
+
+HKEY StringToHKEY(string str) {
+	if (str == "HKEY_CLASSES_ROOT")
+		return HKEY_CLASSES_ROOT;
+	if (str == "HKEY_CURRENT_USER")
+		return HKEY_CURRENT_USER;
+	if (str == "HKEY_LOCAL_MACHINE")
+		return HKEY_LOCAL_MACHINE;
+	if (str == "HKEY_USERS")
+		return HKEY_USERS;
+	if (str == "HKEY_PERFORMANCE_DATA")
+		return HKEY_PERFORMANCE_DATA;
+	if (str == "HKEY_CURRENT_CONFIG")
+		return HKEY_CURRENT_CONFIG;
+	if (str == "HKEY_DYN_DATA")
+		return HKEY_DYN_DATA;
 }
