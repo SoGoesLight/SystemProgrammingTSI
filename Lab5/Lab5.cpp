@@ -17,8 +17,6 @@ HKEY StringToHKEY(string str); // since we can't just input/convert HKEY
 int main(int argc, _TCHAR* argv[])
 {
 	HKEY hKey, inputHKey;
-	LPCWSTR pString = _T("Software\\Microsoft\\CurrentVersion\\Windows");
-	LPCWSTR stringForFunc;
 	string hKeyString, setKeyString;
 
 	cout << "Enter root directory key, please: ";
