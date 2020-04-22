@@ -2,15 +2,15 @@
 #include <windows.h>
 #include <tchar.h>
 
-#define MAX_KEY_LENGTH 255
 #define MAX_VALUE_NAME 8191
+#define MAX_KEY_LENGTH 255
 
 using namespace std;
 
 // Вариант 2. Написать консольное приложение, выводящие на экран хранящиеся в заданном ключе реестра переменные, их типы и значения. 
 //            Имена корневого и заданного ключей вводится в программу с клавиатуры.
 
-void QueryKey(HKEY hKey);
+void ProcessKey(HKEY hKey);
 string RegistryValueTypeToString(DWORD type);
 HKEY StringToHKEY(string str); // since we can't just input/convert HKEY
 
@@ -27,12 +27,12 @@ int main(int argc, _TCHAR* argv[])
 	inputHKey = StringToHKEY(hKeyString);
 	LONG dwOpenKey = RegOpenKeyExA(inputHKey, setKeyString.c_str(), 0, KEY_READ, &hKey);
 	
-	// example of manual input
+	// example of "in-code" input
 	// LONG dwOpenKey = RegOpenKeyExW(HKEY_LOCAL_MACHINE, _T("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\"), 0, KEY_READ, &hKey); 
 
 	if (dwOpenKey == ERROR_SUCCESS) { // code 0 = ok
 		cout << "Registry key opened successfully, error code " << GetLastError() << endl; 
-		QueryKey(hKey);
+		ProcessKey(hKey);
 	}
 	else {
 		cout << "Registry key open failed, error code " << dwOpenKey << endl;
@@ -43,7 +43,7 @@ int main(int argc, _TCHAR* argv[])
 	return 0;
 }
 
-void QueryKey(HKEY hKey)
+void ProcessKey(HKEY hKey)
 {
 	TCHAR    subkeyBuff[MAX_KEY_LENGTH];						
 	TCHAR    classBuff[MAX_PATH] = TEXT("");
