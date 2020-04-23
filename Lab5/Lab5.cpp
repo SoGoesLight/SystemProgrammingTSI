@@ -14,7 +14,7 @@ void ProcessKey(HKEY hKey);
 string RegistryValueTypeToString(DWORD type);
 HKEY StringToHKEY(string str); // since we can't just input/convert HKEY
 
-int main(int argc, _TCHAR* argv[])
+int main()
 {
 	HKEY hKey, inputHKey;
 	string hKeyString, setKeyString;
@@ -28,7 +28,7 @@ int main(int argc, _TCHAR* argv[])
 	LONG dwOpenKey = RegOpenKeyExA(inputHKey, setKeyString.c_str(), 0, KEY_READ, &hKey);
 	
 	// example of "in-code" input
-	// LONG dwOpenKey = RegOpenKeyExW(HKEY_LOCAL_MACHINE, _T("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\"), 0, KEY_READ, &hKey); 
+	//LONG dwOpenKey = RegOpenKeyExW(HKEY_CURRENT_USER, _T("Console\\"), 0, KEY_READ, &hKey); 
 
 	if (dwOpenKey == ERROR_SUCCESS) { // code 0 = ok
 		cout << "Registry key opened successfully, error code " << GetLastError() << endl; 
