@@ -2,7 +2,7 @@
 #include <windows.h>
 #include <tchar.h>
 
-#define MAX_VALUE_NAME 8191
+#define MAX_VALUE_NAME 16383
 #define MAX_KEY_LENGTH 255
 
 using namespace std;
@@ -19,16 +19,17 @@ int main()
 	HKEY hKey, inputHKey;
 	string hKeyString, setKeyString;
 
-	cout << "Enter root directory key, please: ";
-	cin >> hKeyString;                               // input example: HKEY_LOCAL_MACHINE
-    cout << "Enter key directory path, please: ";
-	cin >> setKeyString;							 // input example: SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\
+	//cout << "Enter root directory key, please: ";
+	//cin >> hKeyString;                               // input example: HKEY_LOCAL_MACHINE
+    //cout << "Enter key directory path, please: ";
+	//cin >> setKeyString;							 // input example: SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\
 
 	inputHKey = StringToHKEY(hKeyString);
-	LONG dwOpenKey = RegOpenKeyExA(inputHKey, setKeyString.c_str(), 0, KEY_READ, &hKey);
+	//LONG dwOpenKey = RegOpenKeyExA(inputHKey, setKeyString.c_str(), 0, KEY_READ, &hKey);
 	
 	// example of "in-code" input
-	//LONG dwOpenKey = RegOpenKeyExW(HKEY_CURRENT_USER, _T("Console\\"), 0, KEY_READ, &hKey); 
+	//LONG dwOpenKey = RegOpenKeyExW(HKEY_CURRENT_USER, _T("Console\\"), 0, KEY_READ, &hKey);
+	LONG dwOpenKey = RegOpenKeyExW(HKEY_LOCAL_MACHINE, _T("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\"), 0, KEY_READ, &hKey);
 
 	if (dwOpenKey == ERROR_SUCCESS) { // code 0 = ok
 		cout << "Registry key opened successfully, error code " << GetLastError() << endl; 
@@ -65,10 +66,10 @@ void ProcessKey(HKEY hKey)
 		{
 			nameSize = MAX_KEY_LENGTH;
 			statusCode = RegEnumKeyExW(hKey, i, subkeyBuff, &nameSize, NULL, NULL, NULL, &fileLastWriteTime);
-			if (statusCode == ERROR_SUCCESS)
-			{
-				wcout << i + 1 << ") " << subkeyBuff << endl;
-			}
+			//if (statusCode == ERROR_SUCCESS)
+			//{
+			//	wcout << i + 1 << ") " << subkeyBuff << endl;
+			//}
 		}
 	}
 
@@ -83,17 +84,26 @@ void ProcessKey(HKEY hKey)
 		for (int i = 0, statusCode = ERROR_SUCCESS; i < keyValuesNum; i++)
 		{
 			chValueName = MAX_VALUE_NAME;
-			valueName[longestValueData] = '\0';
-			statusCode = RegEnumValueW(hKey, i, valueName, &chValueName, NULL, NULL, NULL, NULL);
+			DWORD sizeName = sizeof(chValueName);
+			valueName[0] = '\0';
+			statusCode = RegEnumValueW(hKey, i, valueName, &chValueName, NULL, NULL, NULL, &sizeName);
 
 			if (statusCode == ERROR_SUCCESS)
 			{
-
 				DWORD lpData = longestValueData;
-				buffer[0] = '\0'; // in case we got wrong data
-				LONG dwRes = RegQueryValueExW(hKey, valueName, 0, &type, buffer, &lpData);
+				LONG dwRes = RegQueryValueExW(hKey, valueName, 0, &type, (LPBYTE)(&buffer), &lpData);
 				wcout << i + 1 << ") " << valueName << "\r\t\t\t\t Type: "; 
-				cout << RegistryValueTypeToString(type) << endl;
+				cout << RegistryValueTypeToString(type);
+				switch (type) {
+				case 1:
+					wprintf(TEXT("\r\t\t\t\t\t\t\t Data = %s \n"), (LPBYTE)(&buffer));
+					break;
+				case 4:
+					cout << "\r\t\t\t\t\t\t\t Data = " << (DWORD)buffer << endl;
+					break;
+				default: 
+					break;
+				}
 			}
 		}
 	}
