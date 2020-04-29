@@ -26,7 +26,12 @@ int main(int argc, char *argv[])
 
     _cputs("\n\nMy name is: ");
     _cputs(argv[0]);
+    _cputs(argv[1]);
+    _cputs(argv[2]);
+    _cputs(argv[3]);
 
+    for (int i = 1; i < argc; ++i)
+        _cprintf("\n My %d parameter = %s", i, argv[i]);
 
     _cputs("\n\nPress any key to finish.\n");
     _getch();

@@ -2,6 +2,10 @@
 #include <conio.h>
 #include <Windows.h>
 #include <time.h>
+#include <tchar.h>
+#include <string>
+
+using namespace std;
 
 // 14 % 10 + 1 = 5 вариант
 /*
@@ -22,7 +26,7 @@
 
 int main()
 {
-    int day, month, year;
+    int day = 0, month = 0, year = 0;
 
     srand(time(NULL));
 
@@ -44,14 +48,25 @@ int main()
     _cprintf("\n\nDate: %d/%d/%d\t(day/month/year)", day, month, year);
 
     char lpszAppName[] = "C:\\Projects\\SystemProgramming\\Debug\\Lab6_Slave.exe";
+    //char arguments[] = { (char)day, '/', (char)month, '/', (char)year, '\0'};
+
 
     STARTUPINFOA si;
     PROCESS_INFORMATION piApp;
 
+    //char date[256];
+    //sprintf_s(date, "%d %d %d ", day, month, year);
+
+    string cPath = "C:\\Projects\\SystemProgramming\\Debug\\Lab6_Slave.exe";
+    cPath += " " + to_string(day) + " " + to_string(month) + " " + to_string(year);
+
+    char* a = new char[cPath.length() + 1];
+    strcpy(a, cPath.c_str());
+
     ZeroMemory(&si, sizeof(STARTUPINFO));
     si.cb = sizeof(STARTUPINFO);
 
-    if (!CreateProcessA(lpszAppName, NULL, NULL, NULL, FALSE,
+    if (!CreateProcessA(lpszAppName, a, NULL, NULL, FALSE,
         CREATE_NEW_CONSOLE, NULL, NULL, &si, &piApp)) {
         _cputs("The new process is not created, check a name of the process.\n");
         _cputs("Press any key to finish.\n");
