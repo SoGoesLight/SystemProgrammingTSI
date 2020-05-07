@@ -23,18 +23,25 @@ using namespace std;
 
 */
 
-DWORD WINAPI ThreadProc1(LPDWORD lpData, int* arr);
+DWORD WINAPI worker(LPDWORD lpData);
+HANDLE sem;
+
 void findMinAndMax(int* arr, int arrSize);
 void numOfElemsBiggerThanAvg(int* arr, int arrSize);
 float avgOfElements(int* arr, int arrSize);
 
+int arrSize, min;
+int* arr = new int[arrSize];
+
 int main()
-{	
-	int arrSize;
+{
+	sem = CreateSemaphore(NULL, 3, 3, _TEXT("Sm"));
+	cout << "Main attempting semaphore" << endl;
+
 	cout << "Set the size of your array, please: ";
 	cin >> arrSize;
 
-	int* arr = new int[arrSize];
+	arr = new int[arrSize];
 
 	cout << "Would you mind filling your array with numbers?\n";
 	for (int i = 0; i < arrSize; i++) {
@@ -43,49 +50,66 @@ int main()
 	}
 
 	DWORD tid;
-	HANDLE thread1 = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)ThreadProc1, NULL, 0, &tid);
+	HANDLE thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)worker, NULL, 0, &tid);
 
 	findMinAndMax(arr, arrSize);
 
-	CloseHandle(thread1);
+	WaitForSingleObject(sem, INFINITE);
+	cout << "\nMain got semaphore" << endl;
+
+	CloseHandle(thread);
 
 	numOfElemsBiggerThanAvg(arr, arrSize);
 
-	//for (int i = 0; i < arrSize; i++)
-	//	cout << i + 1 << ") " << arr[i] << " ";
-
+	CloseHandle(sem);
 	delete[] arr;
 	cout << "\n\n";
 	return 0;
 }
 
-DWORD WINAPI ThreadProc1(LPDWORD lpData, int* arr)
+DWORD WINAPI worker(LPDWORD lpData)
 {
-	HANDLE sem = CreateSemaphore(NULL, 3, 3, _TEXT("Sm"));
-	WaitForSingleObject(sem, INFINITE);
+	int sumOfOddNumber = 0;
+
+	for (int i = 0; i < arrSize; i++) {
+		WaitForSingleObject(sem, INFINITE);
+		cout << "\nWorker got semaphore" << endl;
+
+		if (arr[i] % 2 != 0) {
+			sumOfOddNumber += arr[i];
+		}
+
+		ReleaseSemaphore(sem, 1, NULL);
+		cout << "\nSemaphore released in worker";
+	}
+
+	sumOfOddNumber += min;
+
+	cout << "Summ of odd elements and smallest elements: " << sumOfOddNumber;
 
 	return 0;
 }
 
 void findMinAndMax(int* arr, int arrSize) {
 
-	int min, max, i;
+	int max, i;
 
 	max = arr[0];
-	for (i = 0; i < arrSize; i++)
-	{
-		if (max < arr[i])
-			max = arr[i];
-		Sleep(7);
-	}
-
 	min = arr[0];
 
 	for (i = 0; i < arrSize; i++)
 	{
+		WaitForSingleObject(sem, INFINITE);
+		cout << "\nMain got semaphore" << endl;
+
+		if (max < arr[i])
+			max = arr[i];
+		Sleep(7);		
 		if (min > arr[i])
 			min = arr[i];
 		Sleep(7);
+
+		ReleaseSemaphore(sem, 1, NULL);
 	}
 
 	cout << "\nSmallest value is " << min;
